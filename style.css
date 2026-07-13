@@ -934,3 +934,14 @@ button { cursor: pointer; border: none; font-family: inherit; }
         text-align: center;
     }
 }
+
+/* ============================================
+       Landscape: larger logo when space permits
+       ============================================ */
+@media (orientation: landscape) and (min-width: 768px) {
+    .hero-image-container,
+    .hero-image-logo {
+        width: 300px;
+        height: 300px;
+    }
+}
