@@ -264,6 +264,8 @@
             var data = JSON.parse(text);
             if (data.online) {
                 setServerOnline();
+            } else if (data.debug && data.debug.error && data.debug.error.ping && data.debug.error.ping.indexOf('Unknown problem') !== -1) {
+                setServerApiError();
             } else {
                 setServerOffline();
             }
