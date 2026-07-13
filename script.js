@@ -338,22 +338,27 @@
     var modpackVersionEl = document.getElementById('modpackVersion');
 
     function fetchModpackVersion() {
-        var url = 'https://api.allorigins.win/raw?url=https://update.kxkl2024.cn/index.json';
+        var DIRECT_URL = 'https://update.kxkl2024.cn/index.json';
+        var PROXY_URL = 'https://corsproxy.io/?url=' + encodeURIComponent(DIRECT_URL);
 
-        fetch(url, {
-            cache: 'no-store'
-        }).then(function(r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        }).then(function(data) {
-            if (data && data.length > 0) {
-                var latest = data[data.length - 1];
-                if (latest && latest.label) {
-                    modpackVersionEl.textContent = 'v' + latest.label;
-                    return;
+        function tryFetch(url) {
+            return fetch(url, { cache: 'no-store' }).then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            }).then(function(data) {
+                if (data && data.length > 0) {
+                    var latest = data[data.length - 1];
+                    if (latest && latest.label) {
+                        modpackVersionEl.textContent = 'v' + latest.label;
+                        return true;
+                    }
                 }
-            }
-            modpackVersionEl.textContent = '获取失败';
+                return false;
+            });
+        }
+
+        tryFetch(PROXY_URL).catch(function() {
+            return tryFetch(DIRECT_URL);
         }).catch(function() {
             modpackVersionEl.textContent = '获取失败';
         });
