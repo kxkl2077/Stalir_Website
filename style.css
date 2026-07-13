@@ -802,27 +802,9 @@ a.plugin-card:hover .plugin-card-tag {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 17px solid #ef4444;
-    background: none;
-    border-radius: 0;
     flex-shrink: 0;
-}
-.modpack-warning-icon::after {
-    content: '!';
-    position: absolute;
-    top: 3px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #fff;
-    font-size: 0.6rem;
-    font-weight: 800;
-    font-family: 'JetBrains Mono', 'Consolas', monospace;
-    line-height: 1;
+    color: #ef4444;
+    line-height: 0;
 }
 
 /* ============================================
