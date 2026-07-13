@@ -478,8 +478,8 @@ button { cursor: pointer; border: none; font-family: inherit; }
 
 .hero-image-container {
     position: relative;
-    width: 500px;
-    height: 500px;
+    width: 256px;
+    height: 256px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -537,10 +537,10 @@ button { cursor: pointer; border: none; font-family: inherit; }
 .hero-image-logo {
     position: relative;
     z-index: 1;
-    width: 500px;
-    height: 500px;
+    width: 256px;
+    height: 256px;
     object-fit: contain;
-    filter: drop-shadow(0 0 60px rgba(99, 102, 241, 0.35));
+    filter: drop-shadow(0 0 48px rgba(99, 102, 241, 0.35));
 }
 
 /* ============================================
@@ -843,13 +843,13 @@ button { cursor: pointer; border: none; font-family: inherit; }
     }
 
     .hero-image-container {
-        width: 320px;
-        height: 320px;
+        width: 256px;
+        height: 256px;
     }
 
     .hero-image-logo {
-        width: 320px;
-        height: 320px;
+        width: 256px;
+        height: 256px;
     }
 
     .hero-actions {
