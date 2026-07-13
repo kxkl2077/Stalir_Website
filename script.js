@@ -230,6 +230,9 @@
     var statusDot = document.getElementById('statusDot');
     var statusText = document.getElementById('statusText');
 
+    var STATUS_URL = 'https://api.mcsrvstat.us/3/mc.stalir.cn';
+    var retryTimer = null;
+
     function clearStatus() {
         statusBadge.classList.remove('online', 'offline', 'api-error');
         statusDot.classList.remove('icon-check', 'icon-x', 'spin');
@@ -256,45 +259,69 @@
         statusText.textContent = 'API 无法连接';
     }
 
-    function checkServer() {
+    function parseServerStatus(text) {
+        try {
+            var data = JSON.parse(text);
+            if (data.online) {
+                setServerOnline();
+            } else {
+                setServerOffline();
+            }
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function checkServer(allowRetry) {
         // Reset to checking state
         clearStatus();
         statusDot.classList.add('spin');
         statusText.textContent = '检测中...';
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'https://api.mcsrvstat.us/3/mc.stalir.cn', true);
-        xhr.timeout = 10000;
+        var url = STATUS_URL + '?_=' + Date.now();
 
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    if (data.online) {
-                        setServerOnline();
-                    } else {
-                        setServerOffline();
-                    }
-                } catch (e) {
-                    setServerApiError();
-                }
+        fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            cache: 'no-store',
+        }).then(function(response) {
+            // 304 Not Modified — cached response is still valid, treat as success
+            if (response.status === 304) {
+                // Re-fetch without cache-busting to get the cached body
+                return fetch(STATUS_URL, { method: 'GET', cache: 'force-cache' })
+                    .then(function(r) { return r.text(); })
+                    .then(function(text) {
+                        if (!parseServerStatus(text)) {
+                            // If we can't parse the cached response, consider it online
+                            // (304 means the server was online when cached)
+                            setServerOnline();
+                        }
+                    });
+            }
+
+            if (response.status === 200) {
+                return response.text().then(function(text) {
+                    parseServerStatus(text);
+                });
+            }
+
+            // Any other status — fail
+            throw new Error('HTTP ' + response.status);
+        }).catch(function() {
+            if (allowRetry !== false) {
+                // Retry once after 2 seconds
+                clearTimeout(retryTimer);
+                retryTimer = setTimeout(function() {
+                    checkServer(false);
+                }, 2000);
             } else {
                 setServerApiError();
             }
-        };
-
-        xhr.onerror = function() {
-            setServerApiError();
-        };
-
-        xhr.ontimeout = function() {
-            setServerApiError();
-        };
-
-        xhr.send();
+        });
     }
 
     // Check on load, then every 60 seconds
     checkServer();
-    setInterval(checkServer, 60000);
+    setInterval(function() { checkServer(); }, 60000);
 })();
