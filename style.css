@@ -139,6 +139,9 @@ button { cursor: pointer; border: none; font-family: inherit; }
 }
 
 .nav-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-2);
