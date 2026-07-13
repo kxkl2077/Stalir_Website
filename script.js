@@ -339,13 +339,26 @@
 
     function fetchModpackVersion() {
         var DIRECT_URL = 'https://update.kxkl2024.cn/index.json';
-        var PROXY_URL = 'https://corsproxy.io/?url=' + encodeURIComponent(DIRECT_URL);
+        var PROXIES = [
+            'https://api.allorigins.win/get?url=',
+            'https://corsproxy.org/?url=',
+            'https://api.allorigins.win/raw?url=',
+        ];
+        var proxyIndex = 0;
 
-        function tryFetch(url) {
+        function tryNext() {
+            if (proxyIndex >= PROXIES.length) return Promise.reject();
+            var idx = proxyIndex;
+            var url = PROXIES[idx] + encodeURIComponent(DIRECT_URL);
+            proxyIndex++;
             return fetch(url, { cache: 'no-store' }).then(function(r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
-            }).then(function(data) {
+                return r.text();
+            }).then(function(text) {
+                if (idx === 0) {
+                    try { text = JSON.parse(text).contents; } catch(e) {}
+                }
+                var data = JSON.parse(text);
                 if (data && data.length > 0) {
                     var latest = data[data.length - 1];
                     if (latest && latest.label) {
@@ -353,13 +366,13 @@
                         return true;
                     }
                 }
-                return false;
+                return tryNext();
+            }).catch(function() {
+                return tryNext();
             });
         }
 
-        tryFetch(PROXY_URL).catch(function() {
-            return tryFetch(DIRECT_URL);
-        }).catch(function() {
+        tryNext().catch(function() {
             modpackVersionEl.textContent = '获取失败';
         });
     }
