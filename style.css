@@ -221,7 +221,13 @@ button { cursor: pointer; border: none; font-family: inherit; }
     font-weight: 500;
     color: var(--brand-1);
     margin-bottom: 28px;
-    transition: background 0.3s, border-color 0.3s, color 0.3s;
+    transition: background 0.3s, border-color 0.3s, color 0.3s, transform 0.15s;
+    cursor: pointer;
+    user-select: none;
+}
+
+.hero-badge:active {
+    transform: scale(0.95);
 }
 
 .hero-badge-dot {

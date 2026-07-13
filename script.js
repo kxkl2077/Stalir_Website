@@ -327,6 +327,11 @@
     checkServer();
     setInterval(function() { checkServer(); }, 60000);
 
+    // Click status badge to refresh
+    statusBadge.addEventListener('click', function() {
+        checkServer();
+    });
+
     // ============================================
     //  Modpack Version
     // ============================================
