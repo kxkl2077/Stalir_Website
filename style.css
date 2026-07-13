@@ -651,14 +651,23 @@ button { cursor: pointer; border: none; font-family: inherit; }
     border: 1px solid var(--divider);
 }
 
-.plugin-card {
+.plugin-card,
+a.plugin-card {
+    display: block;
     background: var(--bg-soft);
     padding: 28px 24px;
-    transition: background var(--transition);
+    transition: background var(--transition), transform var(--transition);
+    color: inherit;
+    text-decoration: none;
 }
 
-.plugin-card:hover {
+a.plugin-card:hover {
     background: var(--bg-elv);
+    transform: translateY(-2px);
+}
+
+a.plugin-card:active {
+    transform: translateY(0);
 }
 
 .plugin-card-header {
@@ -708,7 +717,7 @@ button { cursor: pointer; border: none; font-family: inherit; }
     transition: background 0.2s, color 0.2s;
 }
 
-.plugin-card a:hover .plugin-card-tag {
+a.plugin-card:hover .plugin-card-tag {
     background: rgba(129, 140, 248, 0.16);
     color: var(--brand-1);
 }
