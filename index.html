@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stalir - 公益群组生存服。死亡不掉落、跨服聊天、mcMMO技能、季节系统，加入我们！">
+    <meta name="keywords" content="Minecraft,服务器,生存服,群组服,Stalir,mcMMO">
+    <title>Stalir | 公益群组生存服</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Canvas Particle Background -->
+    <canvas id="particles"></canvas>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">
+                <img src="logo.png" alt="Stalir" class="nav-logo-img">
+                Stalir
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#hero" class="active" data-nav>首页</a></li>
+                <li><a href="#features" data-nav>特色</a></li>
+                <li><a href="#plugins" data-nav>插件</a></li>
+                <li><a href="#join" data-nav>加入</a></li>
+            </ul>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-inner">
+            <div class="hero-text">
+                <div class="hero-badge reveal" id="serverStatus">
+                    <span class="hero-badge-dot spin" id="statusDot"></span>
+                    <span id="statusText">检测中...</span>
+                </div>
+                <h1 class="hero-name reveal reveal-d1">Stalir</h1>
+                <p class="hero-tagline reveal reveal-d2">
+                    公益群组生存服 -- 死亡不掉落、跨服聊天、mcMMO 技能、季节系统，<br>一个纯粹而丰富的 Minecraft 生存体验。
+                </p>
+                <div class="reveal reveal-d3">
+                    <div class="hero-ip-box" id="heroIpBox" title="点击复制 IP 地址">
+                        <span class="hero-ip-label">服务器地址</span>
+                        <span class="hero-ip-value">mc.stalir.cn</span>
+                        <span class="hero-ip-copy">点击复制</span>
+                        <div class="hero-ip-copied" id="heroIpCopied">已复制到剪贴板</div>
+                    </div>
+                </div>
+                <div class="hero-actions reveal reveal-d3">
+                    <a href="#join" class="btn btn-brand">立即加入</a>
+                    <a href="https://qm.qq.com/q/RLmX2D9H6U" target="_blank" rel="noopener noreferrer" class="btn btn-alt">QQ 群 655038860</a>
+                </div>
+            </div>
+            <div class="hero-image reveal reveal-d3">
+                <div class="hero-image-container">
+                    <div class="hero-image-bg"></div>
+                    <div class="hero-image-bg-ring"></div>
+                    <img src="logo.png" alt="Stalir Logo" class="hero-image-logo">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section" id="features">
+        <div class="section-inner">
+            <div class="section-header reveal">
+                <span class="section-label">为什么选择 Stalir</span>
+                <h2 class="section-title">服务器特色</h2>
+                <p class="section-subtitle">精心配置的群组生存服，为你提供稳定、有趣、便捷的游戏体验。</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card reveal reveal-d1">
+                    <div class="feature-card-number">01</div>
+                    <h3>死亡不掉落</h3>
+                    <p>探险无忧，死亡后背包物品完整保留，大胆挑战任何地形和怪物。</p>
+                </div>
+                <div class="feature-card reveal reveal-d1">
+                    <div class="feature-card-number">02</div>
+                    <h3>丰富指令支持</h3>
+                    <p>集成 tpa、home、back 等基础指令，传送回家返回，操作便捷。</p>
+                </div>
+                <div class="feature-card reveal reveal-d2">
+                    <div class="feature-card-number">03</div>
+                    <h3>群组架构</h3>
+                    <p>Velocity 群组端 + Paper 子服，高效稳定管理，保证流畅体验。</p>
+                </div>
+                <div class="feature-card reveal reveal-d2">
+                    <div class="feature-card-number">04</div>
+                    <h3>跨服聊天</h3>
+                    <p>TrChat 全服频道互通，无论在哪个子服，朋友的消息永不掉线。</p>
+                </div>
+                <div class="feature-card reveal reveal-d3">
+                    <div class="feature-card-number">05</div>
+                    <h3>自动登录</h3>
+                    <p>正版玩家自动识别登录，省去重复输密码，进入游戏快人一步。</p>
+                </div>
+                <div class="feature-card reveal reveal-d3">
+                    <div class="feature-card-number">06</div>
+                    <h3>菜单系统</h3>
+                    <p>直观的 GUI 菜单，设置选项一键完成，新手也能快速上手。</p>
+                </div>
+                <div class="feature-card reveal reveal-d4">
+                    <div class="feature-card-number">07</div>
+                    <h3>趣味增强</h3>
+                    <p>mcMMO 技能插件 + 季节系统，生存玩法更有深度，每天都有新鲜感。</p>
+                </div>
+                <div class="feature-card reveal reveal-d4">
+                    <div class="feature-card-number">08</div>
+                    <h3>跨服同步</h3>
+                    <p>多子服之间背包数据实时同步，切换服务器不影响物品和进度。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Plugins Section -->
+    <section class="section" id="plugins">
+        <div class="section-inner">
+            <div class="section-header reveal">
+                <span class="section-label">技术架构</span>
+                <h2 class="section-title">插件与设施</h2>
+                <p class="section-subtitle">服务器采用现代化群组架构，搭配精选插件，持续更新优化。</p>
+            </div>
+            <div class="plugins-grid">
+                <div class="plugin-card reveal reveal-d1">
+                    <div class="plugin-card-header">
+                        <div class="plugin-card-icon">TP</div>
+                        <h4>基础指令集</h4>
+                    </div>
+                    <p>tpa 传送请求、home 设置家、back 返回死亡点、spawn 回主城。</p>
+                    <span class="plugin-card-tag">Essentials</span>
+                </div>
+                <div class="plugin-card reveal reveal-d1">
+                    <div class="plugin-card-header">
+                        <div class="plugin-card-icon">CH</div>
+                        <h4>跨服聊天系统</h4>
+                    </div>
+                    <p>TrChat 驱动全服频道互通，多频道切换，消息跨子服即时送达。</p>
+                    <span class="plugin-card-tag">TrChat</span>
+                </div>
+                <div class="plugin-card reveal reveal-d2">
+                    <div class="plugin-card-header">
+                        <div class="plugin-card-icon">SK</div>
+                        <h4>mcMMO 技能</h4>
+                    </div>
+                    <p>挖掘、战斗、采集等十余种技能树，等级成长带来专属被动与主动能力。</p>
+                    <span class="plugin-card-tag">mcMMO</span>
+                </div>
+                <div class="plugin-card reveal reveal-d2">
+                    <div class="plugin-card-header">
+                        <div class="plugin-card-icon">SN</div>
+                        <h4>季节系统</h4>
+                    </div>
+                    <p>动态季节更替影响环境与作物生长，春种秋收，沉浸式生存体验。</p>
+                    <span class="plugin-card-tag">Seasons</span>
+                </div>
+                <div class="plugin-card reveal reveal-d3">
+                    <div class="plugin-card-header">
+                        <div class="plugin-card-icon">AU</div>
+                        <h4>正版自动登录</h4>
+                    </div>
+                    <p>正版 Mojang 账号自动识别，无需手动输入密码，安全又便捷。</p>
+                    <span class="plugin-card-tag">Auth</span>
+                </div>
+                <div class="plugin-card reveal reveal-d3">
+                    <div class="plugin-card-header">
+                        <div class="plugin-card-icon">MN</div>
+                        <h4>GUI 菜单</h4>
+                    </div>
+                    <p>图形化菜单界面，功能导航、个人设置、服务器切换都在一个界面完成。</p>
+                    <span class="plugin-card-tag">Menu</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Join Section -->
+    <section class="section" id="join">
+        <div class="section-inner">
+            <div class="section-header reveal">
+                <span class="section-label">加入我们</span>
+                <h2 class="section-title">即刻启程</h2>
+                <p class="section-subtitle">复制服务器地址，打开 Minecraft 即可加入。也欢迎加入 QQ 群获取最新消息。</p>
+            </div>
+            <div class="join-grid">
+                <div class="join-card join-card-accent reveal reveal-d1">
+                    <div class="join-card-label">服务器地址</div>
+                    <div class="join-card-value">mc.stalir.cn</div>
+                    <div class="join-card-desc">Java 版 Minecraft，打开游戏直接输入地址即可加入</div>
+                    <button class="btn btn-brand" id="joinCopyBtn">复制 IP 地址</button>
+                </div>
+                <div class="join-card reveal reveal-d2">
+                    <div class="join-card-label">QQ 交流群</div>
+                    <div class="join-card-value">655038860</div>
+                    <div class="join-card-desc">获取服务器动态、活动通知、与更多玩家交流</div>
+                    <a href="https://qm.qq.com/q/655038860" target="_blank" rel="noopener noreferrer" class="btn btn-alt">加入 QQ 群</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <p class="footer-text">&copy; 2026 <strong>Stalir</strong>. 公益群组生存服 -- 持续更新中。</p>
+            <div class="footer-links">
+                <a href="#hero">首页</a>
+                <a href="#features">特色</a>
+                <a href="#plugins">插件</a>
+                <a href="#join">加入</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
