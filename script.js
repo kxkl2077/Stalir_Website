@@ -338,9 +338,14 @@
     var modpackVersionEl = document.getElementById('modpackVersion');
 
     function fetchModpackVersion() {
-        fetch('https://update.kxkl2024.cn/index.json', {
+        var url = 'https://api.allorigins.win/raw?url=https://update.kxkl2024.cn/index.json';
+
+        fetch(url, {
             cache: 'no-store'
-        }).then(function(r) { return r.json(); }).then(function(data) {
+        }).then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        }).then(function(data) {
             if (data && data.length > 0) {
                 var latest = data[data.length - 1];
                 if (latest && latest.label) {
