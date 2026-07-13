@@ -790,6 +790,32 @@ a.plugin-card:hover .plugin-card-tag {
 }
 
 /* ============================================
+       Modpack Warning
+       ============================================ */
+.modpack-warning {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(234, 179, 8, 0.12);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    border-radius: 100px;
+    padding: 8px 22px;
+    margin: -28px auto 20px;
+    color: #fbbf24;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.modpack-warning-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #eab308;
+    line-height: 0;
+}
 
 /* ============================================
        Footer
