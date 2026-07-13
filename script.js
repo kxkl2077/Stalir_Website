@@ -326,4 +326,28 @@
     // Check on load, then every 60 seconds
     checkServer();
     setInterval(function() { checkServer(); }, 60000);
+
+    // ============================================
+    //  Modpack Version
+    // ============================================
+    var modpackVersionEl = document.getElementById('modpackVersion');
+
+    function fetchModpackVersion() {
+        fetch('https://update.kxkl2024.cn/index.json', {
+            cache: 'no-store'
+        }).then(function(r) { return r.json(); }).then(function(data) {
+            if (data && data.length > 0) {
+                var latest = data[data.length - 1];
+                if (latest && latest.label) {
+                    modpackVersionEl.textContent = 'v' + latest.label;
+                    return;
+                }
+            }
+            modpackVersionEl.textContent = '获取失败';
+        }).catch(function() {
+            modpackVersionEl.textContent = '获取失败';
+        });
+    }
+
+    fetchModpackVersion();
 })();

@@ -780,6 +780,57 @@ a.plugin-card:hover .plugin-card-tag {
 }
 
 /* ============================================
+       Modpack Notice
+       ============================================ */
+.modpack-notice {
+    margin-top: 32px;
+}
+
+.modpack-notice-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    flex-wrap: wrap;
+}
+
+.modpack-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.modpack-version {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--brand-1);
+    letter-spacing: 0.02em;
+}
+
+.modpack-notice-body .btn-alt {
+    margin-left: auto;
+}
+
+@media (max-width: 640px) {
+    .modpack-notice-body {
+        flex-direction: column;
+        text-align: center;
+    }
+    .modpack-notice-body .btn-alt {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================
        Footer
        ============================================ */
 .footer {
