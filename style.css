@@ -705,6 +705,12 @@ button { cursor: pointer; border: none; font-family: inherit; }
     color: var(--brand-2);
     border-radius: 100px;
     font-family: 'JetBrains Mono', 'Consolas', monospace;
+    transition: background 0.2s, color 0.2s;
+}
+
+.plugin-card a:hover .plugin-card-tag {
+    background: rgba(129, 140, 248, 0.16);
+    color: var(--brand-1);
 }
 
 /* ============================================
