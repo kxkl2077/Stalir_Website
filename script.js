@@ -170,39 +170,108 @@ const STATUS = {
     ERROR: { text: '状态获取失败', cls: 'api-error', dot: 'icon-x' }
 };
 
+console.log('[Server Status] Initializing...');
+console.log('[Server Status] DOM elements found:', {
+    statusDot: !!statusDot,
+    statusText: !!statusText,
+    badge: !!badge
+});
+
 function setStatus(state) {
+    console.log(`[Server Status] Setting status to: ${state}`);
     const s = STATUS[state] || STATUS.ERROR;
+    
+    console.log('[Server Status] Status config:', {
+        state,
+        text: s.text,
+        cls: s.cls,
+        dot: s.dot
+    });
+    
     badge.className = 'hero-badge ' + s.cls;
     statusText.textContent = s.text;
     statusDot.className = 'hero-badge-dot';
-    if (s.dot === 'spin') statusDot.classList.add('spin');
-    else if (s.dot === 'icon-check') statusDot.classList.add('icon-check');
-    else if (s.dot === 'icon-x') statusDot.classList.add('icon-x');
-    if (state === 'ONLINE') statusDot.classList.add('pulse');
+    
+    if (s.dot === 'spin') {
+        statusDot.classList.add('spin');
+        console.log('[Server Status] Added spin animation');
+    } else if (s.dot === 'icon-check') {
+        statusDot.classList.add('icon-check');
+        console.log('[Server Status] Added check icon');
+    } else if (s.dot === 'icon-x') {
+        statusDot.classList.add('icon-x');
+        console.log('[Server Status] Added X icon');
+    }
+    
+    if (state === 'ONLINE') {
+        statusDot.classList.add('pulse');
+        console.log('[Server Status] Added pulse animation (online)');
+    }
+    
+    console.log(`[Server Status] Status updated: "${s.text}"`);
 }
 
 async function fetchStatus() {
+    console.log('[Server Status] Fetching server status...');
+    const startTime = Date.now();
+    
     try {
+        console.log('[Server Status] Making API request to: https://mcapi.us/server/status?ip=mc.stalir.cn&port=25565');
         const resp = await fetch('https://mcapi.us/server/status?ip=mc.stalir.cn&port=25565');
-        if (!resp.ok) throw new Error('API error');
+        
+        console.log('[Server Status] API response received:', {
+            status: resp.status,
+            statusText: resp.statusText,
+            ok: resp.ok,
+            time: `${Date.now() - startTime}ms`
+        });
+        
+        if (!resp.ok) {
+            console.warn(`[Server Status] API returned error status: ${resp.status}`);
+            throw new Error(`API error: ${resp.status} ${resp.statusText}`);
+        }
+        
         const data = await resp.json();
+        console.log('[Server Status] API response data:', {
+            online: data.online,
+            players: data.players,
+            motd: data.motd?.clean || data.motd?.raw,
+            version: data.version,
+            timestamp: new Date().toISOString()
+        });
+        
         if (data.online) {
+            console.log('[Server Status] Server is ONLINE ✓');
             setStatus('ONLINE');
         } else {
+            console.log('[Server Status] Server is OFFLINE ✗');
             setStatus('OFFLINE');
         }
-    } catch (_) {
+        
+    } catch (error) {
+        console.error('[Server Status] Error fetching status:', {
+            message: error.message,
+            stack: error.stack,
+            time: `${Date.now() - startTime}ms`
+        });
         setStatus('ERROR');
     }
 }
 
+console.log('[Server Status] Starting initial status check...');
 setStatus('CHECKING');
-setTimeout(fetchStatus, 400);
+setTimeout(() => {
+    console.log('[Server Status] Initial delay (400ms) completed, fetching...');
+    fetchStatus();
+}, 400);
 
 badge.addEventListener('click', () => {
+    console.log('[Server Status] Badge clicked - refreshing status manually');
     setStatus('CHECKING');
     fetchStatus();
 });
+
+console.log('[Server Status] Status checker initialized successfully ✓');
 
 // ============================================
 // 6. Plugin Card 鼠标跟随光效
