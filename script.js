@@ -358,15 +358,26 @@ async function fetchFromMcApi() {
         }
         
         const data = await resp.json();
+        
+        // 获取时间戳
+        const lastUpdated = data.last_updated ? parseInt(data.last_updated) : null;
+        const timestamp = lastUpdated || Math.floor(Date.now() / 1000);
+        
         console.log('[服务器状态] [主 API] 响应数据:', {
             在线状态: data.online,
             玩家数: data.players,
             MOTD: data.motd?.clean || data.motd?.raw,
             版本: data.version,
+            最后更新时间: lastUpdated ? new Date(lastUpdated * 1000).toLocaleString('zh-CN') : '未知',
             时间戳: new Date().toISOString()
         });
         
-        return { online: data.online, source: 'mcapi.us' };
+        return { 
+            online: data.online, 
+            source: 'mcapi.us',
+            timestamp: timestamp,
+            raw: data
+        };
         
     } catch (error) {
         console.error('[服务器状态] [主 API] 获取失败:', {
@@ -403,6 +414,11 @@ async function fetchFromMcSrvStat() {
         }
         
         const data = await resp.json();
+        
+        // 获取缓存时间戳
+        const cacheTime = data.debug?.cachetime ? parseInt(data.debug.cachetime) : null;
+        const timestamp = cacheTime || Math.floor(Date.now() / 1000);
+        
         console.log('[服务器状态] [备用 API] 响应数据:', {
             在线状态: data.online,
             玩家数: data.players ? `${data.players.online}/${data.players.max}` : '未知',
@@ -410,10 +426,16 @@ async function fetchFromMcSrvStat() {
             版本: data.version || '未知',
             软件: data.software || '未知',
             插件数: data.plugins ? data.plugins.length : '未知',
+            缓存时间: cacheTime ? new Date(cacheTime * 1000).toLocaleString('zh-CN') : '未知',
             时间戳: new Date().toISOString()
         });
         
-        return { online: data.online, source: 'mcsrvstat.us' };
+        return { 
+            online: data.online, 
+            source: 'mcsrvstat.us',
+            timestamp: timestamp,
+            raw: data
+        };
         
     } catch (error) {
         console.error('[服务器状态] [备用 API] 获取失败:', {
@@ -424,72 +446,154 @@ async function fetchFromMcSrvStat() {
     }
 }
 
+function determineServerStatus(primaryResult, fallbackResult) {
+    console.log('[服务器状态] 开始综合判断服务器状态...');
+    
+    // 检查 API 是否返回了有效数据
+    const hasPrimary = primaryResult !== null && primaryResult !== undefined;
+    const hasFallback = fallbackResult !== null && fallbackResult !== undefined;
+    
+    console.log('[服务器状态] 数据可用性:', {
+        主API: hasPrimary ? '可用' : '不可用',
+        备用API: hasFallback ? '可用' : '不可用'
+    });
+    
+    // 情况1: 两个 API 都不可用
+    if (!hasPrimary && !hasFallback) {
+        console.log('[服务器状态] 所有 API 均不可用 ❌');
+        return { status: 'ERROR', reason: '所有 API 不可用' };
+    }
+    
+    // 情况2: 只有主 API 可用
+    if (hasPrimary && !hasFallback) {
+        console.log('[服务器状态] 只有主 API 可用，使用主 API 结果');
+        const status = primaryResult.online ? 'ONLINE' : 'OFFLINE';
+        return { 
+            status: status, 
+            reason: `主 API: ${primaryResult.online ? '在线' : '离线'}`,
+            source: 'mcapi.us',
+            timestamp: primaryResult.timestamp
+        };
+    }
+    
+    // 情况3: 只有备用 API 可用
+    if (!hasPrimary && hasFallback) {
+        console.log('[服务器状态] 只有备用 API 可用，使用备用 API 结果');
+        const status = fallbackResult.online ? 'ONLINE' : 'OFFLINE';
+        return { 
+            status: status, 
+            reason: `备用 API: ${fallbackResult.online ? '在线' : '离线'}`,
+            source: 'mcsrvstat.us',
+            timestamp: fallbackResult.timestamp
+        };
+    }
+    
+    // 情况4: 两个 API 都可用，比较时间戳
+    console.log('[服务器状态] 两个 API 都可用，比较时间戳...');
+    
+    const primaryTime = primaryResult.timestamp;
+    const fallbackTime = fallbackResult.timestamp;
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    // 计算时间差（秒）
+    const primaryAge = currentTime - primaryTime;
+    const fallbackAge = currentTime - fallbackTime;
+    
+    console.log('[服务器状态] 时间戳比较:', {
+        主API时间: new Date(primaryTime * 1000).toLocaleString('zh-CN'),
+        主API年龄: `${primaryAge}秒 (${(primaryAge / 60).toFixed(1)}分钟)`,
+        备用API时间: new Date(fallbackTime * 1000).toLocaleString('zh-CN'),
+        备用API年龄: `${fallbackAge}秒 (${(fallbackAge / 60).toFixed(1)}分钟)`,
+        时间差: `${Math.abs(primaryAge - fallbackAge)}秒`
+    });
+    
+    // 选择时间戳更近的数据（数值更大表示更近）
+    let selectedResult;
+    let selectedSource;
+    let selectedTime;
+    
+    if (primaryTime >= fallbackTime) {
+        selectedResult = primaryResult;
+        selectedSource = '主 API (mcapi.us)';
+        selectedTime = primaryTime;
+        console.log('[服务器状态] 选择主 API 数据 (时间戳更新)');
+    } else {
+        selectedResult = fallbackResult;
+        selectedSource = '备用 API (mcsrvstat.us)';
+        selectedTime = fallbackTime;
+        console.log('[服务器状态] 选择备用 API 数据 (时间戳更新)');
+    }
+    
+    const status = selectedResult.online ? 'ONLINE' : 'OFFLINE';
+    console.log(`[服务器状态] 使用 ${selectedSource} 数据: ${selectedResult.online ? '在线 ✓' : '离线 ✗'}`);
+    
+    // 额外检查：如果两个 API 状态不一致，记录警告
+    if (primaryResult.online !== fallbackResult.online) {
+        console.warn('[服务器状态] ⚠️ 两个 API 返回的状态不一致:', {
+            主API: primaryResult.online ? '在线' : '离线',
+            备用API: fallbackResult.online ? '在线' : '离线',
+            使用数据: selectedSource
+        });
+    }
+    
+    return { 
+        status: status, 
+        reason: `使用 ${selectedSource} 数据 (时间戳: ${new Date(selectedTime * 1000).toLocaleString('zh-CN')})`,
+        source: selectedSource,
+        timestamp: selectedTime,
+        primaryOnline: primaryResult.online,
+        fallbackOnline: fallbackResult.online
+    };
+}
+
 async function fetchStatus() {
-    console.log('[服务器状态] 开始获取服务器状态 (主 API + 备用 API)...');
+    console.log('[服务器状态] 开始获取服务器状态 (双 API 验证)...');
     const overallStart = Date.now();
     
-    try {
-        // 先尝试主 API
-        console.log('[服务器状态] 尝试主 API...');
-        const result = await fetchFromMcApi();
-        const { online, source } = result;
-        
-        if (online) {
-            console.log(`[服务器状态] 服务器在线 (${source}) ✓`);
-            setStatus('ONLINE');
-            console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
-            return;
-        } else {
-            // 如果主 API 返回离线，用备用 API 验证
-            console.log('[服务器状态] 主 API 返回离线，使用备用 API 验证...');
-            try {
-                const fallbackResult = await fetchFromMcSrvStat();
-                if (fallbackResult.online) {
-                    console.log(`[服务器状态] 备用 API 确认服务器在线 (${fallbackResult.source}) ✓`);
-                    setStatus('ONLINE');
-                    console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
-                    return;
-                } else {
-                    console.log('[服务器状态] 两个 API 均返回离线 ✗');
-                    setStatus('OFFLINE');
-                    console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
-                    return;
-                }
-            } catch (fallbackError) {
-                console.warn('[服务器状态] 备用 API 也失败了，使用主 API 的结果');
-                console.log('[服务器状态] 主 API 返回离线，备用 API 不可用 ✗');
-                setStatus('OFFLINE');
-                console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
-                return;
-            }
-        }
-        
-    } catch (error) {
-        console.error('[服务器状态] 主 API 失败，尝试备用 API...', error);
-        
-        // 主 API 失败，尝试备用 API
-        try {
-            const fallbackResult = await fetchFromMcSrvStat();
-            if (fallbackResult.online) {
-                console.log(`[服务器状态] 备用 API 确认服务器在线 (${fallbackResult.source}) ✓`);
-                setStatus('ONLINE');
-                console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
-                return;
-            } else {
-                console.log('[服务器状态] 备用 API 返回离线 ✗');
-                setStatus('OFFLINE');
-                console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
-                return;
-            }
-        } catch (fallbackError) {
-            console.error('[服务器状态] 所有 API 均失败:', {
-                主API错误: error.message,
-                备用API错误: fallbackError.message,
-                总耗时: `${Date.now() - overallStart}ms`
-            });
-            setStatus('ERROR');
-        }
+    let primaryResult = null;
+    let fallbackResult = null;
+    
+    // 并行请求两个 API
+    console.log('[服务器状态] 并行请求主 API 和备用 API...');
+    const fetchPromises = [
+        fetchFromMcApi().then(result => {
+            primaryResult = result;
+            console.log('[服务器状态] 主 API 请求完成 ✅');
+        }).catch(error => {
+            console.warn('[服务器状态] 主 API 请求失败 ❌:', error.message);
+        }),
+        fetchFromMcSrvStat().then(result => {
+            fallbackResult = result;
+            console.log('[服务器状态] 备用 API 请求完成 ✅');
+        }).catch(error => {
+            console.warn('[服务器状态] 备用 API 请求失败 ❌:', error.message);
+        })
+    ];
+    
+    // 等待两个请求完成（或失败）
+    await Promise.allSettled(fetchPromises);
+    console.log('[服务器状态] 两个 API 请求均已完成');
+    
+    // 综合判断服务器状态
+    const decision = determineServerStatus(primaryResult, fallbackResult);
+    console.log('[服务器状态] 判断结果:', {
+        最终状态: decision.status,
+        数据来源: decision.source || '未知',
+        状态原因: decision.reason,
+        总耗时: `${Date.now() - overallStart}ms`
+    });
+    
+    if (decision.primaryOnline !== undefined && decision.fallbackOnline !== undefined) {
+        console.log('[服务器状态] 状态一致性:', {
+            主API: decision.primaryOnline ? '在线' : '离线',
+            备用API: decision.fallbackOnline ? '在线' : '离线',
+            是否一致: decision.primaryOnline === decision.fallbackOnline ? '是' : '否 ⚠️'
+        });
     }
+    
+    setStatus(decision.status);
+    console.log(`[服务器状态] 最终状态: ${decision.status === 'ONLINE' ? '✅ 在线' : '❌ 离线/错误'}`);
+    console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
 }
 
 console.log('[服务器状态] 开始初始状态检测...');
