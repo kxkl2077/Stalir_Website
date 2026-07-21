@@ -281,7 +281,7 @@ if (joinCopyBtn) {
 console.log('[IP复制] IP 复制功能初始化完成 ✅');
 
 // ============================================
-// 5. Server Status (mcapi.us)
+// 5. Server Status (mcapi.us with fallback)
 // ============================================
 console.log('[服务器状态] 初始化服务器状态检测器...');
 
@@ -336,16 +336,16 @@ function setStatus(state) {
     console.log(`[服务器状态] 状态更新完成: "${s.text}"`);
 }
 
-async function fetchStatus() {
-    console.log('[服务器状态] 开始获取服务器状态...');
+async function fetchFromMcApi() {
+    console.log('[服务器状态] [主 API] 开始获取服务器状态 (mcapi.us)...');
     const startTime = Date.now();
     
     try {
         const apiUrl = 'https://mcapi.us/server/status?ip=mc.stalir.cn&port=25565';
-        console.log(`[服务器状态] 发起 API 请求: ${apiUrl}`);
+        console.log(`[服务器状态] [主 API] 发起请求: ${apiUrl}`);
         const resp = await fetch(apiUrl);
         
-        console.log('[服务器状态] API 响应已接收:', {
+        console.log('[服务器状态] [主 API] 响应已接收:', {
             status: resp.status,
             statusText: resp.statusText,
             ok: resp.ok,
@@ -353,12 +353,12 @@ async function fetchStatus() {
         });
         
         if (!resp.ok) {
-            console.warn(`[服务器状态] API 返回错误状态码: ${resp.status}`);
+            console.warn(`[服务器状态] [主 API] 返回错误状态码: ${resp.status}`);
             throw new Error(`API 错误: ${resp.status} ${resp.statusText}`);
         }
         
         const data = await resp.json();
-        console.log('[服务器状态] API 响应数据:', {
+        console.log('[服务器状态] [主 API] 响应数据:', {
             在线状态: data.online,
             玩家数: data.players,
             MOTD: data.motd?.clean || data.motd?.raw,
@@ -366,21 +366,129 @@ async function fetchStatus() {
             时间戳: new Date().toISOString()
         });
         
-        if (data.online) {
-            console.log('[服务器状态] 服务器在线 ✓');
+        return { online: data.online, source: 'mcapi.us' };
+        
+    } catch (error) {
+        console.error('[服务器状态] [主 API] 获取失败:', {
+            错误信息: error.message,
+            耗时: `${Date.now() - startTime}ms`
+        });
+        throw error;
+    }
+}
+
+async function fetchFromMcSrvStat() {
+    console.log('[服务器状态] [备用 API] 开始获取服务器状态 (mcsrvstat.us)...');
+    const startTime = Date.now();
+    
+    try {
+        const apiUrl = 'https://api.mcsrvstat.us/3/mc.stalir.cn';
+        console.log(`[服务器状态] [备用 API] 发起请求: ${apiUrl}`);
+        const resp = await fetch(apiUrl, {
+            headers: {
+                'User-Agent': 'StalirServerStatus/1.0'
+            }
+        });
+        
+        console.log('[服务器状态] [备用 API] 响应已接收:', {
+            status: resp.status,
+            statusText: resp.statusText,
+            ok: resp.ok,
+            耗时: `${Date.now() - startTime}ms`
+        });
+        
+        if (!resp.ok) {
+            console.warn(`[服务器状态] [备用 API] 返回错误状态码: ${resp.status}`);
+            throw new Error(`备用 API 错误: ${resp.status} ${resp.statusText}`);
+        }
+        
+        const data = await resp.json();
+        console.log('[服务器状态] [备用 API] 响应数据:', {
+            在线状态: data.online,
+            玩家数: data.players ? `${data.players.online}/${data.players.max}` : '未知',
+            MOTD: data.motd?.clean?.[0] || data.motd?.raw?.[0] || '未知',
+            版本: data.version || '未知',
+            软件: data.software || '未知',
+            插件数: data.plugins ? data.plugins.length : '未知',
+            时间戳: new Date().toISOString()
+        });
+        
+        return { online: data.online, source: 'mcsrvstat.us' };
+        
+    } catch (error) {
+        console.error('[服务器状态] [备用 API] 获取失败:', {
+            错误信息: error.message,
+            耗时: `${Date.now() - startTime}ms`
+        });
+        throw error;
+    }
+}
+
+async function fetchStatus() {
+    console.log('[服务器状态] 开始获取服务器状态 (主 API + 备用 API)...');
+    const overallStart = Date.now();
+    
+    try {
+        // 先尝试主 API
+        console.log('[服务器状态] 尝试主 API...');
+        const result = await fetchFromMcApi();
+        const { online, source } = result;
+        
+        if (online) {
+            console.log(`[服务器状态] 服务器在线 (${source}) ✓`);
             setStatus('ONLINE');
+            console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
+            return;
         } else {
-            console.log('[服务器状态] 服务器离线 ✗');
-            setStatus('OFFLINE');
+            // 如果主 API 返回离线，用备用 API 验证
+            console.log('[服务器状态] 主 API 返回离线，使用备用 API 验证...');
+            try {
+                const fallbackResult = await fetchFromMcSrvStat();
+                if (fallbackResult.online) {
+                    console.log(`[服务器状态] 备用 API 确认服务器在线 (${fallbackResult.source}) ✓`);
+                    setStatus('ONLINE');
+                    console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
+                    return;
+                } else {
+                    console.log('[服务器状态] 两个 API 均返回离线 ✗');
+                    setStatus('OFFLINE');
+                    console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
+                    return;
+                }
+            } catch (fallbackError) {
+                console.warn('[服务器状态] 备用 API 也失败了，使用主 API 的结果');
+                console.log('[服务器状态] 主 API 返回离线，备用 API 不可用 ✗');
+                setStatus('OFFLINE');
+                console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
+                return;
+            }
         }
         
     } catch (error) {
-        console.error('[服务器状态] 获取状态失败:', {
-            错误信息: error.message,
-            错误堆栈: error.stack,
-            耗时: `${Date.now() - startTime}ms`
-        });
-        setStatus('ERROR');
+        console.error('[服务器状态] 主 API 失败，尝试备用 API...', error);
+        
+        // 主 API 失败，尝试备用 API
+        try {
+            const fallbackResult = await fetchFromMcSrvStat();
+            if (fallbackResult.online) {
+                console.log(`[服务器状态] 备用 API 确认服务器在线 (${fallbackResult.source}) ✓`);
+                setStatus('ONLINE');
+                console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
+                return;
+            } else {
+                console.log('[服务器状态] 备用 API 返回离线 ✗');
+                setStatus('OFFLINE');
+                console.log(`[服务器状态] 总耗时: ${Date.now() - overallStart}ms`);
+                return;
+            }
+        } catch (fallbackError) {
+            console.error('[服务器状态] 所有 API 均失败:', {
+                主API错误: error.message,
+                备用API错误: fallbackError.message,
+                总耗时: `${Date.now() - overallStart}ms`
+            });
+            setStatus('ERROR');
+        }
     }
 }
 
