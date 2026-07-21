@@ -1,335 +1,220 @@
+// ============================================
+// 1. Particles
+// ============================================
 (function() {
-    // ============================================
-    //  Canvas Particle System (blue-purple theme)
-    // ============================================
-    var canvas = document.getElementById('particles');
-    var ctx = canvas.getContext('2d');
-    var particles = [];
-    var animId;
-
-    var PARTICLE_COUNT = 130;
-    var COLORS = [
-        'rgba(129, 140, 248, 0.45)',
-        'rgba(139, 92, 246, 0.35)',
-        'rgba(168, 177, 255, 0.28)',
-        'rgba(200, 171, 250, 0.22)',
-        'rgba(99, 102, 241, 0.3)',
-        'rgba(148, 163, 184, 0.12)',
-    ];
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let w, h;
+    const particles = [];
+    const COUNT = 70;
 
     function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
     }
+    window.addEventListener('resize', resize);
+    resize();
 
-    function createParticle() {
-        return {
-            x: Math.random() * canvas.width,
-            y: canvas.height + Math.random() * 60,
-            size: Math.random() * 4 + 2,
-            speedY: -(Math.random() * 0.55 + 0.18),
-            speedX: (Math.random() - 0.5) * 0.25,
-            opacity: Math.random() * 0.55 + 0.18,
-            color: COLORS[Math.floor(Math.random() * COLORS.length)],
-            wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: (Math.random() - 0.5) * 0.018,
-        };
-    }
-
-    function initParticles() {
-        particles = [];
-        for (var i = 0; i < PARTICLE_COUNT; i++) {
-            var p = createParticle();
-            p.y = Math.random() * canvas.height;
-            particles.push(p);
+    class Particle {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * w;
+            this.y = Math.random() * h;
+            this.size = Math.random() * 2 + 0.5;
+            this.speedX = (Math.random() - 0.5) * 0.4;
+            this.speedY = (Math.random() - 0.5) * 0.4;
+            this.opacity = Math.random() * 0.5 + 0.1;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            if (this.x < 0 || this.x > w) this.speedX *= -1;
+            if (this.y < 0 || this.y > h) this.speedY *= -1;
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(180, 160, 255, ${this.opacity})`;
+            ctx.fill();
         }
     }
 
-    function updateParticles() {
-        for (var i = 0; i < particles.length; i++) {
-            var p = particles[i];
-            p.y += p.speedY;
-            p.x += p.speedX + Math.sin(p.wobble) * 0.12;
-            p.wobble += p.wobbleSpeed;
+    for (let i = 0; i < COUNT; i++) particles.push(new Particle());
 
-            if (p.y < -10) {
-                p.y = canvas.height + Math.random() * 40;
-                p.x = Math.random() * canvas.width;
+    function drawLines() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 140) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(180, 160, 255, ${0.08 * (1 - dist / 140)})`;
+                    ctx.lineWidth = 0.6;
+                    ctx.stroke();
+                }
             }
-            if (p.x < -10) p.x = canvas.width + 10;
-            if (p.x > canvas.width + 10) p.x = -10;
         }
-    }
-
-    function drawParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (var i = 0; i < particles.length; i++) {
-            var p = particles[i];
-            ctx.fillStyle = p.color;
-            ctx.globalAlpha = p.opacity;
-            ctx.fillRect(p.x, p.y, p.size, p.size);
-        }
-        ctx.globalAlpha = 1;
     }
 
     function animate() {
-        updateParticles();
-        drawParticles();
-        animId = requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, w, h);
+        for (const p of particles) {
+            p.update();
+            p.draw();
+        }
+        drawLines();
+        requestAnimationFrame(animate);
     }
-
-    resize();
-    initParticles();
     animate();
 
-    window.addEventListener('resize', function() {
-        resize();
-        initParticles();
-    });
-
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            cancelAnimationFrame(animId);
-        } else {
-            animate();
+    window.addEventListener('resize', () => {
+        for (const p of particles) {
+            p.x = Math.random() * w;
+            p.y = Math.random() * h;
         }
     });
-
-    // ============================================
-    //  Navigation
-    // ============================================
-    var nav = document.getElementById('nav');
-    var navToggle = document.getElementById('navToggle');
-    var navLinks = document.getElementById('navLinks');
-    var mobileOverlay = document.getElementById('mobileOverlay');
-    var navAnchors = document.querySelectorAll('[data-nav]');
-
-    function closeMenu() {
-        navToggle.classList.remove('active');
-        navLinks.classList.remove('open');
-        mobileOverlay.classList.remove('show');
-        document.body.style.overflow = '';
-    }
-
-    function openMenu() {
-        navToggle.classList.add('active');
-        navLinks.classList.add('open');
-        mobileOverlay.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-
-    navToggle.addEventListener('click', function() {
-        navLinks.classList.contains('open') ? closeMenu() : openMenu();
-    });
-
-    mobileOverlay.addEventListener('click', closeMenu);
-
-    navAnchors.forEach(function(link) {
-        link.addEventListener('click', function() {
-            closeMenu();
-            navAnchors.forEach(function(l) { l.classList.remove('active'); });
-            link.classList.add('active');
-        });
-    });
-
-    var sections = [];
-    navAnchors.forEach(function(a) {
-        var id = a.getAttribute('href').substring(1);
-        var el = document.getElementById(id);
-        if (el) sections.push({ el: el, a: a });
-    });
-
-    function onScroll() {
-        if (window.scrollY > 20) {
-            nav.classList.add('scrolled');
-        } else {
-            nav.classList.remove('scrolled');
-        }
-
-        var scrollPos = window.scrollY + 140;
-        var current = sections[0];
-        for (var i = 0; i < sections.length; i++) {
-            if (sections[i].el.offsetTop <= scrollPos) current = sections[i];
-        }
-        navAnchors.forEach(function(l) { l.classList.remove('active'); });
-        if (current) current.a.classList.add('active');
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
-    // ============================================
-    //  IP Copy
-    // ============================================
-    var SERVER_IP = 'mc.stalir.cn';
-
-    function copyIP(feedbackEl) {
-        function doCopy(text) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                return navigator.clipboard.writeText(text);
-            }
-            return new Promise(function(resolve, reject) {
-                var ta = document.createElement('textarea');
-                ta.value = text;
-                ta.style.position = 'fixed';
-                ta.style.left = '-9999px';
-                document.body.appendChild(ta);
-                ta.focus();
-                ta.select();
-                try {
-                    document.execCommand('copy');
-                    resolve();
-                } catch (e) {
-                    reject(e);
-                }
-                document.body.removeChild(ta);
-            });
-        }
-
-        doCopy(SERVER_IP).then(function() {
-            if (feedbackEl) {
-                feedbackEl.classList.add('show');
-                clearTimeout(feedbackEl._t);
-                feedbackEl._t = setTimeout(function() { feedbackEl.classList.remove('show'); }, 1800);
-            }
-        }).catch(function() {});
-    }
-
-    document.getElementById('heroIpBox').addEventListener('click', function() {
-        copyIP(document.getElementById('heroIpCopied'));
-    });
-
-    document.getElementById('joinCopyBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        copyIP(null);
-        var btn = document.getElementById('joinCopyBtn');
-        var orig = btn.textContent;
-        btn.textContent = '已复制';
-        setTimeout(function() { btn.textContent = orig; }, 1800);
-    });
-
-    // ============================================
-    //  Scroll Reveal
-    // ============================================
-    var revealEls = document.querySelectorAll('.reveal');
-    var revealObserver = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                revealObserver.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
-
-    revealEls.forEach(function(el) { revealObserver.observe(el); });
-
-    // ============================================
-    //  Server Status Check
-    // ============================================
-    var statusBadge = document.getElementById('serverStatus');
-    var statusDot = document.getElementById('statusDot');
-    var statusText = document.getElementById('statusText');
-
-    var STATUS_URL = 'https://api.mcsrvstat.us/3/mc.stalir.cn';
-    var retryTimer = null;
-
-    function clearStatus() {
-        statusBadge.classList.remove('online', 'offline', 'api-error');
-        statusDot.classList.remove('icon-check', 'icon-x', 'spin');
-    }
-
-    function setServerOnline() {
-        clearStatus();
-        statusBadge.classList.add('online');
-        statusDot.classList.add('icon-check');
-        statusText.textContent = '服务器运行中';
-    }
-
-    function setServerOffline() {
-        clearStatus();
-        statusBadge.classList.add('offline');
-        statusDot.classList.add('icon-x');
-        statusText.textContent = '服务器已离线';
-    }
-
-    function setServerApiError() {
-        clearStatus();
-        statusBadge.classList.add('api-error');
-        statusDot.classList.add('icon-x');
-        statusText.textContent = 'API 无法连接';
-    }
-
-    function parseServerStatus(text) {
-        try {
-            var data = JSON.parse(text);
-            if (data.online) {
-                setServerOnline();
-            } else if (data.debug && data.debug.error && data.debug.error.ping && data.debug.error.ping.indexOf('Unknown problem') !== -1) {
-                setServerApiError();
-            } else {
-                setServerOffline();
-            }
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    function checkServer(allowRetry) {
-        // Reset to checking state
-        clearStatus();
-        statusDot.classList.add('spin');
-        statusText.textContent = '检测中...';
-
-        var url = STATUS_URL + '?_=' + Date.now();
-
-        fetch(url, {
-            method: 'GET',
-            mode: 'cors',
-            cache: 'no-store',
-        }).then(function(response) {
-            // 304 Not Modified — cached response is still valid, treat as success
-            if (response.status === 304) {
-                // Re-fetch without cache-busting to get the cached body
-                return fetch(STATUS_URL, { method: 'GET', cache: 'force-cache' })
-                    .then(function(r) { return r.text(); })
-                    .then(function(text) {
-                        if (!parseServerStatus(text)) {
-                            // If we can't parse the cached response, consider it online
-                            // (304 means the server was online when cached)
-                            setServerOnline();
-                        }
-                    });
-            }
-
-            if (response.status === 200) {
-                return response.text().then(function(text) {
-                    parseServerStatus(text);
-                });
-            }
-
-            // Any other status — fail
-            throw new Error('HTTP ' + response.status);
-        }).catch(function() {
-            if (allowRetry !== false) {
-                // Retry once after 2 seconds
-                clearTimeout(retryTimer);
-                retryTimer = setTimeout(function() {
-                    checkServer(false);
-                }, 2000);
-            } else {
-                setServerApiError();
-            }
-        });
-    }
-
-    // Check on load, then every 60 seconds
-    checkServer();
-    setInterval(function() { checkServer(); }, 60000);
-
-    // Click status badge to refresh
-    statusBadge.addEventListener('click', function() {
-        checkServer();
-    });
-
 })();
+
+// ============================================
+// 2. Navigation
+// ============================================
+const nav = document.getElementById('nav');
+const navToggle = document.getElementById('navToggle');
+const navLinks = document.getElementById('navLinks');
+const overlay = document.getElementById('mobileOverlay');
+const navAnchors = document.querySelectorAll('[data-nav]');
+
+window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+function toggleMenu(open) {
+    const isOpen = open !== undefined ? open : !navLinks.classList.contains('open');
+    navLinks.classList.toggle('open', isOpen);
+    navToggle.classList.toggle('active', isOpen);
+    overlay.classList.toggle('show', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+navToggle.addEventListener('click', () => toggleMenu());
+overlay.addEventListener('click', () => toggleMenu(false));
+
+navAnchors.forEach(a => {
+    a.addEventListener('click', () => {
+        if (navLinks.classList.contains('open')) toggleMenu(false);
+        navAnchors.forEach(el => el.classList.remove('active'));
+        a.classList.add('active');
+    });
+});
+
+// ============================================
+// 3. Reveal on Scroll (Intersection Observer)
+// ============================================
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    }
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+revealEls.forEach(el => observer.observe(el));
+
+// ============================================
+// 4. Copy IP
+// ============================================
+const heroIpBox = document.getElementById('heroIpBox');
+const heroIpCopied = document.getElementById('heroIpCopied');
+const joinCopyBtn = document.getElementById('joinCopyBtn');
+
+function copyIp() {
+    const ip = 'mc.stalir.cn';
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(ip).catch(() => fallbackCopy(ip));
+    } else {
+        fallbackCopy(ip);
+    }
+    heroIpCopied.classList.add('show');
+    setTimeout(() => heroIpCopied.classList.remove('show'), 2200);
+}
+
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+}
+
+heroIpBox.addEventListener('click', copyIp);
+if (joinCopyBtn) joinCopyBtn.addEventListener('click', copyIp);
+
+// ============================================
+// 5. Server Status (mcapi.us)
+// ============================================
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const badge = document.getElementById('serverStatus');
+
+const STATUS = {
+    CHECKING: { text: '检测中...', cls: '', dot: 'spin' },
+    ONLINE: { text: '服务器在线', cls: 'online', dot: 'icon-check' },
+    OFFLINE: { text: '服务器离线', cls: 'offline', dot: 'icon-x' },
+    ERROR: { text: '状态获取失败', cls: 'api-error', dot: 'icon-x' }
+};
+
+function setStatus(state) {
+    const s = STATUS[state] || STATUS.ERROR;
+    badge.className = 'hero-badge ' + s.cls;
+    statusText.textContent = s.text;
+    statusDot.className = 'hero-badge-dot';
+    if (s.dot === 'spin') statusDot.classList.add('spin');
+    else if (s.dot === 'icon-check') statusDot.classList.add('icon-check');
+    else if (s.dot === 'icon-x') statusDot.classList.add('icon-x');
+    if (state === 'ONLINE') statusDot.classList.add('pulse');
+}
+
+async function fetchStatus() {
+    try {
+        const resp = await fetch('https://mcapi.us/server/status?ip=mc.stalir.cn&port=25565');
+        if (!resp.ok) throw new Error('API error');
+        const data = await resp.json();
+        if (data.online) {
+            setStatus('ONLINE');
+        } else {
+            setStatus('OFFLINE');
+        }
+    } catch (_) {
+        setStatus('ERROR');
+    }
+}
+
+setStatus('CHECKING');
+setTimeout(fetchStatus, 400);
+
+badge.addEventListener('click', () => {
+    setStatus('CHECKING');
+    fetchStatus();
+});
+
+// ============================================
+// 6. Plugin Card 鼠标跟随光效
+// ============================================
+document.querySelectorAll('.plugin-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        card.style.setProperty('--mouse-x', x + '%');
+        card.style.setProperty('--mouse-y', y + '%');
+    });
+});
+
+console.log('✨ Stalir — 公益群组生存服');
