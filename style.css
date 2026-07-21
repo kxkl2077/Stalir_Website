@@ -664,9 +664,6 @@ button {
     z-index: 1;
     padding: 100px 32px;
 }
-.section:nth-child(even) {
-    background: var(--bg-base);
-}
 .section-inner {
     max-width: var(--max-width);
     margin: 0 auto;
